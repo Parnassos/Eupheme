@@ -1,9 +1,9 @@
 import logbook
 
-import faucets
-import request
-import response
-import routing
+import eupheme.faucets as faucets
+import eupheme.request as request
+import eupheme.response as response
+import eupheme.routing as routing
 
 
 class Application:

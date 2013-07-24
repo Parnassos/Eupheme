@@ -1,5 +1,5 @@
 import urllib.parse
-import response
+import eupheme.response as response
 
 
 class Request:

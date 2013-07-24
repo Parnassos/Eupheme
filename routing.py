@@ -1,5 +1,5 @@
 import re
-import response
+import eupheme.response as response
 
 
 class Route:
