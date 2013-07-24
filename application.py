@@ -86,17 +86,17 @@ class Application:
                 if mimetype is None:
                     # If we cannot generate any of the content types requested,
                     # we should reject the request -- RFC2616 section 14.1.
-                    raise request.HttpNotAcceptableException()
+                    raise response.HttpNotAcceptableException()
 
             if req.content_length is not None and \
                req.content_type is not None and \
                req.content_type not in endpoint.consumes:
                 # We cannot parse the content type -- RFC2616 section 10.4.16.
-                raise request.HttpUnsupportedMediaTypeException()
+                raise response.HttpUnsupportedMediaTypeException()
 
         except AttributeError:
             # Endpoint or produces attribute is missing
-            raise request.HttpInternalServerErrorException()
+            raise response.HttpInternalServerErrorException()
 
         return endpoint, mimetype, charset
 

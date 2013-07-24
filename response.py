@@ -65,7 +65,7 @@ class HttpUnsupportedMediaTypeException(HttpException):
     status = '415 Unsupported Media Type'
 
 
-class HttpInternalServerErrorRexception(HttpException):
+class HttpInternalServerErrorException(HttpException):
     """An internal error occurred on the server."""
 
     status = '500 Internal Server Error'
