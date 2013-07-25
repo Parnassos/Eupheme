@@ -77,9 +77,12 @@ class Application:
         try:
             endpoint = getattr(handler, req.method.lower())
 
-            if req.accept is None:
+            if req.accept is None or \
+               (len(req.accept) == 1 and req.accept[0] == '*/*'):
                 # If the Accept header is absent, then the client is assumed to
                 # accept any content type -- RFC2616 section 14.1.
+                # An Accept header containing */* indicates that the
+                # client accepts any content type as response as well.
                 mimetype = self.DEFAULT_MIMETYPE
             else:
                 mimetype = self.negotiate_accept(req.accept, endpoint.produces)
