@@ -74,7 +74,7 @@ class HttpInternalServerErrorException(HttpException):
 class Response:
     """A response to an HTTP request."""
 
-    def __init__(self, status=None, headers=None, mimetype=None, charset=None):
+    def __init__(self, status=None, headers=None, mimetype=None):
         """Instantiates a response.
 
         The 'status' argument is the HTTP response status. It defaults to the
@@ -87,7 +87,6 @@ class Response:
         self.status = status or STATUS_OK
         self.headers = headers or {}
         self.mimetype = mimetype
-        self.charset = charset
 
     def serve(self, start_response):
         """
@@ -96,10 +95,7 @@ class Response:
         Content-Type header is included in the response.
         """
 
-        if self.mimetype is not None and self.charset is not None:
-            self.headers['Content-Type'] = '{0}; charset={1}'.format(
-                self.mimetype,
-                self.charset
-            )
+        if self.mimetype is not None:
+            self.headers['Content-Type'] = str(self.mimetype)
 
         start_response(self.status, list(self.headers.items()))

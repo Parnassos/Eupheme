@@ -1,5 +1,7 @@
 import urllib.parse
+
 import eupheme.response as response
+import eupheme.mime as mime
 
 
 class Request:
@@ -33,15 +35,36 @@ class Request:
         if not self.content_length:
             self.content_length = None
 
-        # TODO: Not the exact format we can expect on this header.
-        self.accept = environ.get('HTTP_ACCEPT', None)
-        if self.accept is not None:
-            self.accept = self.accept.split(',')
+        # Iterate through the content types accepted by the client
+        if 'HTTP_ACCEPT' in environ:
+            self.accept = set()
+            for accept in environ['HTTP_ACCEPT'].split(','):
+                try:
+                    self.accept.add(mime.MimeType.parse(accept.strip()))
+                except ValueError:
+                    raise response.HttpBadRequestException()
+        else:
+            self.accept = None
 
-        # TODO: Like the accept header, the format for this may differ.
-        self.accept_charset = environ.get('HTTP_ACCEPT_CHARSET', None)
-        if self.accept_charset is not None:
-            self.accept_charset = environ['HTTP_ACCEPT_CHARSET'].split(',')
+        # Iterate through the character sets requested by the client.
+        if 'HTTP_ACCEPT_CHARSET' in environ:
+            self.accept_charset = set()
+            for charset_string in environ['HTTP_ACCEPT_CHARSET'].split(','):
+                try:
+                    self.accept_charset.add(mime.CharacterSet.parse(
+                        charset_string.strip()
+                    ))
+                except LookupError:
+                    # We cannot find the character set requested, carry on.
+                    continue
+                except ValueError:
+                    # The character set was malformed, drop everything.
+                    raise response.HttpBadRequestException()
+        else:
+            # Signals that the user did not request any character set in
+            # particular. Note how this is different from not being able to
+            # find any of the requested sets; in this case, we can choose.
+            self.accept_charset = None
 
         self.path, self.query = self.parse_path(environ.get('PATH_INFO', ''))
 

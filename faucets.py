@@ -2,12 +2,27 @@ import urllib.parse
 import jinja2
 import json
 
+import eupheme.mime as mime
+
+
+def parse_strings(mimetypes):
+    """
+    Iterates through 'mimetypes' and returns a generator in which every string
+    is replaced by its parsed MimeType instance.
+    """
+
+    for mimetype in mimetypes:
+        if isinstance(mimetype, str):
+            yield mime.MimeType.parse(mimetype)
+        else:
+            yield mimetype
+
 
 def produces(*mimetypes):
     """Decorator that sets content types produced by an endpoint."""
 
     def wrapper(func):
-        func.produces = set(mimetypes)
+        func.produces = set(parse_strings(mimetypes))
         return func
     return wrapper
 
@@ -16,7 +31,7 @@ def consumes(*mimetypes):
     """Decorator that sets acceptable input content types for an endpoint."""
 
     def wrapper(func):
-        func.consumes = set(mimetypes)
+        func.consumes = set(parse_strings(mimetypes))
         return func
     return wrapper
 
@@ -93,7 +108,9 @@ class OutgoingFaucet:
 class FormFaucet(IncomingFaucet):
     """Faucet that processes urlencoded form data."""
 
-    mimetypes = {'application/x-www-form-urlencoded'}
+    mimetypes = {
+        mime.MimeType('application', 'x-www-form-urlencoded')
+    }
 
     def incoming(self, data):
         return urllib.parse.parse_qs(data)
@@ -104,7 +121,9 @@ class JinjaFaucet(OutgoingFaucet):
     Faucet that processes outgoing data by calling the jinja2 template engine.
     """
 
-    mimetypes = {'text/html'}
+    mimetypes = {
+        mime.MimeType('text', 'html')
+    }
 
     def __init__(self, template_location):
         self.environment = jinja2.Environment(
@@ -122,7 +141,9 @@ class JsonFaucet(OutgoingFaucet):
     Faucet that processes outgoing data by encoding it in JSON.
     """
 
-    mimetypes = {'application/json'}
+    mimetypes = {
+        mime.MimeType('application', 'json')
+    }
 
     def outgoing(self, data):
         # TODO: Allow serialization of objects.
