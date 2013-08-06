@@ -112,8 +112,32 @@ class FormFaucet(IncomingFaucet):
         mime.MimeType('application', 'x-www-form-urlencoded')
     }
 
+    def sniff_charset(self, qs):
+        """
+        Decodes the query string and looks for an entry with the name
+        _charset_. If it finds it, that's the charset the form was sent in,
+        otherwise it returns None and lets the caller decide what charset
+        to use.
+        """
+
+        # For information on why we're doing this see:
+        # http://www.w3.org/TR/html5/forms.html#url-encoded-form-data
+
+        # Decode the form data and drop any non-ascii values,then parse it.
+        querydata = qs.decode('ascii', 'ignore')
+        querystring = urllib.parse.parse_qs(querydata)
+
+        # If _charset_ is found in the query string we return that, otherwise
+        # we'll just return None and let the caller decide what to do.
+        if '_charset_' in querystring:
+            return querystring['_charset_'][0]
+        else:
+            return None
+
     def incoming(self, data):
-        return urllib.parse.parse_qs(data)
+        # TODO: Configurable default charset
+        charset = self.sniff_charset(data) or 'utf-8'
+        return urllib.parse.parse_qs(data.decode(charset))
 
 
 class JinjaFaucet(OutgoingFaucet):
