@@ -36,6 +36,24 @@ def consumes(*mimetypes):
     return wrapper
 
 
+class Flow:
+    """Data class used for data flowing in and out of faucets."""
+
+    IN = 'in'
+    OUT = 'out'
+
+    data = None
+    direction = None
+    endpoint = None
+
+    def __init__(self, direction, data, endpoint=None):
+        """Instantiates a new flow object."""
+
+        self.direction = direction
+        self.data = data
+        self.endpoint = endpoint
+
+
 class FaucetManager:
     """Manages incoming as well as outgoing faucets.
 
@@ -70,21 +88,21 @@ class FaucetManager:
 
         self.add(self.faucets_outgoing, faucet)
 
-    def process_incoming(self, mimetype, data):
+    def process_incoming(self, mimetype, flow):
         """
         Processes an incoming request by calling the appropriate faucet.
         Returns the data to be consumed as processed by the faucet called.
         """
 
-        return self.faucets_incoming[mimetype].incoming(data)
+        return self.faucets_incoming[mimetype].incoming(flow)
 
-    def process_outgoing(self, mimetype, data):
+    def process_outgoing(self, mimetype, flow):
         """
         Processes an outgoing response by calling the appropriate faucet.
         Returns the data to be served as processed by the faucet called.
         """
 
-        return self.faucets_outgoing[mimetype].outgoing(data)
+        return self.faucets_outgoing[mimetype].outgoing(flow)
 
 
 class IncomingFaucet:
@@ -92,7 +110,7 @@ class IncomingFaucet:
 
     mimetypes = None
 
-    def incoming(self, method, data):
+    def incoming(self, flow):
         raise NotImplementedError
 
 
@@ -101,7 +119,7 @@ class OutgoingFaucet:
 
     mimetypes = None
 
-    def outgoing(self, method, result):
+    def outgoing(self, flow):
         raise NotImplementedError
 
 
@@ -134,10 +152,10 @@ class FormFaucet(IncomingFaucet):
         else:
             return None
 
-    def incoming(self, data):
+    def incoming(self, flow):
         # TODO: Configurable default charset
-        charset = self.sniff_charset(data) or 'utf-8'
-        return urllib.parse.parse_qs(data.decode(charset))
+        charset = self.sniff_charset(flow.data) or 'utf-8'
+        return urllib.parse.parse_qs(flow.data.decode(charset))
 
 
 class JinjaFaucet(OutgoingFaucet):
@@ -154,10 +172,10 @@ class JinjaFaucet(OutgoingFaucet):
             loader=jinja2.FileSystemLoader(template_location),
         )
 
-    def outgoing(self, data):
+    def outgoing(self, flow):
         # TODO: Figure out how to locate the template.
         template = self.environment.get_template('default.html')
-        return template.render(data)
+        return template.render(flow.data)
 
 
 class JsonFaucet(OutgoingFaucet):
@@ -169,8 +187,8 @@ class JsonFaucet(OutgoingFaucet):
         mime.MimeType('application', 'json')
     }
 
-    def outgoing(self, data):
+    def outgoing(self, flow):
         # TODO: Allow serialization of objects.
         # TODO: Mechanism to selectively exclude items from the output.
 
-        return json.dumps(data)
+        return json.dumps(flow.data)

@@ -67,7 +67,10 @@ class Application:
             # If there is an entity included in this request, run it through
             # the appropriate faucet for this endpoint.
             if data is not None:
-                data = self.faucets.process_incoming(req.content_type, data)
+                data = self.faucets.process_incoming(
+                    req.content_type,
+                    faucets.Flow(faucets.Flow.IN, data)
+                )
 
             # Call on the endpoint to do the actual data processing.
             # TODO: Not all HTTP verbs conventionally expect data.
@@ -75,7 +78,10 @@ class Application:
             result = endpoint(data, *args, **req.query)
 
             # Run the produced data through a faucet for the outgoing mimetype.
-            output = self.faucets.process_outgoing(mimetype, result)
+            output = self.faucets.process_outgoing(
+                mimetype,
+                faucets.Flow(faucets.Flow.OUT, result, endpoint=endpoint)
+            )
 
             # Synthesize the negotiated mimetype and charset
             mimetype = mime.MimeType(
