@@ -36,6 +36,16 @@ def consumes(*mimetypes):
     return wrapper
 
 
+def template(template):
+    """Decorator that associates an endpoint with a template."""
+
+    def wrapper(func):
+        func.template = template
+        return func
+
+    return wrapper
+
+
 class Flow:
     """Data class used for data flowing in and out of faucets."""
 
@@ -173,8 +183,11 @@ class JinjaFaucet(OutgoingFaucet):
         )
 
     def outgoing(self, flow):
-        # TODO: Figure out how to locate the template.
-        template = self.environment.get_template('default.html')
+        try:
+            template = self.environment.get_template(flow.endpoint.template)
+        except AttributeError:
+            template = self.environment.get_template('default.html')
+
         return template.render(flow.data)
 
 
