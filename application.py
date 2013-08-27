@@ -6,6 +6,7 @@ import eupheme.response as response
 import eupheme.routing as routing
 import eupheme.negotiation as negotiation
 import eupheme.mime as mime
+import eupheme.config as config
 
 
 class Application:
@@ -18,7 +19,7 @@ class Application:
     An instance of this class is a valid WSGI callable as specified in PEP3333.
     """
 
-    def __init__(self):
+    def __init__(self, path=None):
         """
         Instantiates a new application, with empty routing and faucet tables.
         """
@@ -26,15 +27,16 @@ class Application:
         self.routes = routing.RouteManager()
         self.faucets = faucets.FaucetManager()
 
-        # TODO: Make these configurable in a nice way
+        conf = config.load(path)
+
+        faucets.FormFaucet.default_charset = \
+            conf.default.charset.codec.name
+
         self.broker = negotiation.Broker(
-            charsets={
-                mime.CharacterSet('utf-8'),
-                mime.CharacterSet('ascii'),
-            },
-            default_charset=mime.CharacterSet('utf-8'),
-            methods={'GET', 'POST', 'PUT'},
-            default_mimetype=mime.MimeType('text', 'html')
+            charsets=conf.charsets,
+            default_charset=conf.default.charset,
+            methods=conf.methods,
+            default_mimetype=conf.default.mimetype
         )
 
         self.logger = logbook.Logger('Application')

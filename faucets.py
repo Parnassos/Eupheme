@@ -136,6 +136,8 @@ class OutgoingFaucet:
 class FormFaucet(IncomingFaucet):
     """Faucet that processes urlencoded form data."""
 
+    default_charset = 'utf-8'
+
     mimetypes = {
         mime.MimeType('application', 'x-www-form-urlencoded')
     }
@@ -163,8 +165,7 @@ class FormFaucet(IncomingFaucet):
             return None
 
     def incoming(self, flow):
-        # TODO: Configurable default charset
-        charset = self.sniff_charset(flow.data) or 'utf-8'
+        charset = self.sniff_charset(flow.data) or FormFaucet.default_charset
         return urllib.parse.parse_qs(flow.data.decode(charset))
 
 
