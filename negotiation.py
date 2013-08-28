@@ -99,7 +99,7 @@ class Broker:
 
         if method not in resource.allowed_methods:
             # Method not allowed for this resource -- RFC2616 section 5.1.1.
-            raise response.HttpMethodNotAllowedException(self.allowed_methods)
+            raise response.HttpMethodNotAllowedException(resource.allowed_methods)
 
         try:
             return getattr(resource, method.lower())
