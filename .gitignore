@@ -1,4 +1,9 @@
 *.pyc
+*.so
+*.egg
+*.egg-info
 __pycache__
+/build/
+/dist/
 /env/
 *.patch
