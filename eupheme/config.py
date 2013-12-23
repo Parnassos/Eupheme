@@ -113,6 +113,10 @@ def _check_defaults(data):
 
     """
 
+    # Make sure data is not none whn we reach the the actual checks
+    if data is None:
+        data = {}
+
     # If there's no default key at all, add it
     if 'default' not in data:
         data['default'] = Config.defaults['default']
