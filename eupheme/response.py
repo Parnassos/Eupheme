@@ -71,6 +71,12 @@ class HttpInternalServerErrorException(HttpException):
     status = '500 Internal Server Error'
 
 
+class HttpNotImplementedException(HttpException):
+    """Unrecognized method requested by the client."""
+
+    status = '501 Not Implemented'
+
+
 class Response:
     """A response to an HTTP request."""
 
