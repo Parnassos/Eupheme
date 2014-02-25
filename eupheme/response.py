@@ -1,4 +1,6 @@
 """Module containing classes that pertain to forming an HTTP response."""
+import eupheme.cookies
+
 
 STATUS_OK = '200 OK'
 
@@ -14,7 +16,7 @@ class HttpException(Exception):
     def as_response(self):
         """Returns the exception in the form of a Response object."""
 
-        return Response(status=self.status, headers=self.headers)
+        return Response({}, status=self.status, headers=self.headers)
 
 
 class HttpNotFoundException(HttpException):
@@ -80,7 +82,7 @@ class HttpNotImplementedException(HttpException):
 class Response:
     """A response to an HTTP request."""
 
-    def __init__(self, status=None, headers=None, mimetype=None):
+    def __init__(self, data, status=None, headers=None, mimetype=None):
         """Instantiates a response.
 
         The 'status' argument is the HTTP response status. It defaults to the
@@ -91,8 +93,13 @@ class Response:
         """
 
         self.status = status or STATUS_OK
+        self.data = data
+
+        # The headers has to be a list since there can be several Set-Cookie
+        # headers for example.
         self.headers = headers or {}
         self.mimetype = mimetype
+        self.cookies = eupheme.cookies.CookieManager()
 
     def serve(self, start_response):
         """
@@ -104,4 +111,11 @@ class Response:
         if self.mimetype is not None:
             self.headers['Content-Type'] = str(self.mimetype)
 
-        start_response(self.status, list(self.headers.items()))
+        headers = list(self.headers.items())
+        # TODO: Add cookie extraction code
+        for key in self.cookies:
+            cookie = self.cookies.cookies[key]
+            cookiestr = cookie.output().split(':')
+            headers.append((cookiestr[0], cookiestr[1].strip()))
+
+        start_response(self.status, headers)
