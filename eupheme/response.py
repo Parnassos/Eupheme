@@ -112,7 +112,6 @@ class Response:
             self.headers['Content-Type'] = str(self.mimetype)
 
         headers = list(self.headers.items())
-        # TODO: Add cookie extraction code
         for key in self.cookies:
             cookie = self.cookies.cookies[key]
             cookiestr = cookie.output().split(':')

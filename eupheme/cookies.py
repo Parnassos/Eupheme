@@ -23,7 +23,8 @@ class InvalidOperationException(RuntimeError):
 
     This class is used for when the user tries to make CookieManager set a
     cookie when the manager is in read-only mode (such as when used in
-    request objects).
+    request objects). Or when trying to make it sign a cookie without having
+    a secret key set.
 
     """
 
@@ -139,9 +140,10 @@ class CookieManager:
                           httponly=False, secure=False):
         """ Set a signed cookie.
 
-        Signed cookies are cookies signed using a timestamp, a secret key, the
-        name, the value with hmac-sha-224. This should be used where it's
-        important that cookies are not forged.
+        Signed cookies are cookies signed using a secret key. The signed
+        components of the cookie are the name, the value (in base64 form)
+        and a timestamp. This should be used where it's important that
+        cookies are not forged.
 
         """
         self.set_cookie(
@@ -161,8 +163,8 @@ class CookieManager:
 def signed_value(secret, name, value, timestamp, codec):
     """ Create a string with an encoded value, a timestamp and a signature.
 
-    Signed values are signed using HMAC-SHA-224 with a combination of a
-    secret key, the name of the cookie, the value of the cookie, and the
+    Signed values are signed using HMAC-SHA-224. Signed values are a
+    combination of a the name of the cookie, the value of the cookie, and the
     timestamp.
 
     Returns a string with a value, a timestamp and a signature to be used
@@ -183,11 +185,11 @@ def signed_value(secret, name, value, timestamp, codec):
 def signature(secret, name, value, timestamp, codec):
     """ Create a signature for use as signature in a signed cookie.
 
-    This method takes name, value and a timestamp to generate a signed
-    value using the secret key to try to make sure that signed cookies
+    This method takes name, value and a timestamp to generate a signature
+    using the secret key to try to make sure that signed cookies
     can't be forged.
 
-    Returns a hexdigest of the signature.
+    Returns a HMAC object.
 
     """
 
