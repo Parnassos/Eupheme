@@ -1,5 +1,4 @@
 import urllib.parse
-import http.cookies
 
 import eupheme.response as response
 import eupheme.mime as mime
@@ -22,7 +21,9 @@ class Request:
         # Presence of these keys is guaranteed by PEP3333
         self.method = environ['REQUEST_METHOD']
         self.body = environ['wsgi.input']
-        self.cookies = cookies.CookieManager.load(environ['HTTP_COOKIE'], ro=True)
+        self.cookies = cookies.CookieManager.load(
+            environ.get('HTTP_COOKIE', {}), ro=True
+        )
 
         # These keys may or may not be present, or empty if they are.
         self.content_type = environ.get('CONTENT_TYPE', None)

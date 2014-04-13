@@ -44,6 +44,8 @@ class CookieManager:
 
     """
 
+    key = None
+
     def __init__(self, ro=False):
         """ Create a new cookie manager. """
 
