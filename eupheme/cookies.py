@@ -51,7 +51,7 @@ class CookieManager:
 
         self.cookies = SimpleCookie()
         self.key = CookieManager.key
-        self.ro = False
+        self.ro = ro
 
     def __iter__(self):
         return iter(self.cookies)
