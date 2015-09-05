@@ -39,6 +39,16 @@ class HttpMovedPermanentlyException(HttpException):
         self.location = location
 
 
+class HttpMovedException(HttpException):
+    """ The requested resource can be found elsewhere. """
+
+    status = '302 Found'
+
+    def __init__(self, location):
+        super().__init__()
+        self.location = location
+
+
 class HttpBadRequestException(HttpException):
     """The client has issued an invalid request."""
     status = '400 Bad Request'
@@ -118,3 +128,22 @@ class Response:
             headers.append((cookiestr[0], cookiestr[1].strip()))
 
         start_response(self.status, headers)
+
+    @staticmethod
+    def redirect(url, permanent=False):
+        """ Redirect from one page to another.
+
+        Returns a response object containing no data that redirects
+        the user to the provided URL. This can be used when redirecting
+        on pages where there is a need to set a cookie or otherwise return
+        some data that is not possible to do using HttpExceptions.
+
+        """
+        resp = Response(
+            {},
+            status=HttpMovedPermanentlyException.status if permanent
+            else HttpMovedException.status
+        )
+        resp.headers['Location'] = url
+
+        return resp
