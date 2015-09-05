@@ -192,6 +192,20 @@ class JinjaFaucet(OutgoingFaucet):
         return template.render(flow.data)
 
 
+class EuphemeJsonEncoder(json.JSONEncoder):
+
+    def default(self, o):
+        if hasattr(o, 'to_json_compat'):
+            # Attempt to convert the object into something that's JSON
+            # compatible. If it succeeds, return the object.
+            compat = o.to_json_compat()
+            return compat
+        else:
+            # If there is no to_json_compat function available on the
+            # object, attempt converting it using the default.
+            return json.JSONEncoder.default(self, o)
+
+
 class JsonFaucet(OutgoingFaucet):
     """
     Faucet that processes outgoing data by encoding it in JSON.
@@ -201,8 +215,12 @@ class JsonFaucet(OutgoingFaucet):
         mime.MimeType('application', 'json')
     }
 
+    encoder = None
+
+    def __init__(self):
+        self.encoder = EuphemeJsonEncoder()
+
     def outgoing(self, flow):
-        # TODO: Allow serialization of objects.
         # TODO: Mechanism to selectively exclude items from the output.
 
-        return json.dumps(flow.data)
+        return self.encoder.encode(flow.data)
