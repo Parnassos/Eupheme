@@ -1,5 +1,15 @@
+""" Testing module for eupheme.faucets.
+
+This file contains the testcases used to test the functionality of the
+various faucets used in Eupheme.
+
+"""
+
 import eupheme.faucets as faucets
 import eupheme.mime as mime
+
+import nose
+from json import loads
 
 
 def test_parse_strings():
@@ -26,8 +36,8 @@ def test_parse_strings():
 def test_decorator_lengths():
     """Combined decorator test.
 
-    Determines if the produces, consumes and template decorators apply correctly
-    and return correct data of the right length.
+    Determines if the produces, consumes and template decorators apply
+    correctly and return correct data of the right length.
 
     """
 
@@ -72,6 +82,7 @@ def test_formfaucet():
     assert len(result2) == 1 and len(result2['key']) == 2
     assert result2['key'] == ['test', 'hohum']
 
+
 def test_jinjafaucet():
     """Test if JinjaFaucet uses the specified template.
 
@@ -85,7 +96,6 @@ def test_jinjafaucet():
         pass
 
     jinja = faucets.JinjaFaucet('tests/')
-
 
     flow = faucets.Flow(
         faucets.Flow.OUT,
@@ -101,6 +111,7 @@ def test_jinjafaucet():
     assert '<title>Test template</title>' in result
     assert 'Some test data' in result
     assert 'Test data:' in result
+
 
 def test_jsonfaucet():
     """Test if JsonFaucet properly dumps data as JSON."""
@@ -124,3 +135,60 @@ def test_jsonfaucet():
     assert 'Some test data' in result
     assert 'Nyaa~' in result
     assert r'\u30cb\u30e3\u30fc' in result
+
+
+class A:
+    a = 'test'
+    b = 'test2'
+
+    def to_json_compat(self):
+        return {'a': self.a, 'b': self.b}
+
+
+def test_jsonencoder():
+    """ Test if the EuphemeJsonEncoder works as intended. """
+    encoder = faucets.EuphemeJsonEncoder()
+
+    a_obj = A()
+    json_data = encoder.encode(a_obj)
+    json_obj = loads(json_data)
+
+    assert json_obj['a'] == 'test'
+    assert json_obj['b'] == 'test2'
+
+
+def test_jsonfaucet_encoder():
+    """ Test if the JsonFaucet properly dumps custom data. """
+    jsonf = faucets.JsonFaucet()
+    data = {'a': 'testing', 'obj': A()}
+
+    result = jsonf.outgoing(
+        faucets.Flow(
+            faucets.Flow.OUT, data
+        )
+    )
+
+    result_obj = loads(result)
+
+    assert result_obj['a'] == 'testing'
+    assert result_obj['obj']['a'] == 'test'
+    assert result_obj['obj']['b'] == 'test2'
+
+
+@nose.tools.raises(TypeError)
+def test_jsonfaucet_encoder_exception():
+    """ Test if the JsonFaucet throws an exception as expected. """
+    jsonf = faucets.JsonFaucet()
+
+    class B:
+        pass
+
+    data = {'a': 'testing', 'obj': B()}
+
+    result = jsonf.outgoing(
+        faucets.Flow(
+            faucets.Flow.OUT, data
+        )
+    )
+
+    print(result)
