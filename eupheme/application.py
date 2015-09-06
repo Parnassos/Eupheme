@@ -7,6 +7,7 @@ import eupheme.routing as routing
 import eupheme.negotiation as negotiation
 import eupheme.mime as mime
 import eupheme.config as config
+import eupheme.cookies as cookies
 
 
 class Application:
@@ -38,6 +39,10 @@ class Application:
             methods=conf.methods,
             default_mimetype=conf.default.mimetype
         )
+
+        if hasattr(conf, 'cookies') and hasattr(conf.cookies, 'key'):
+            cookies.CookieManager.key = conf.cookies.key
+            cookies.CookieManager.codec = conf.default.charset.codec
 
         self.logger = logbook.Logger('Application')
 
@@ -77,12 +82,17 @@ class Application:
             # Call on the endpoint to do the actual data processing.
             # TODO: Not all HTTP verbs conventionally expect data.
             # How do we encapsulate this nicely for resource endpoints?
-            result = endpoint(data, *args, **req.query)
+            result = endpoint(data, *args, request=req)
+
+            # If this is an old-fashioned object being returned then turn it
+            # into a response object.
+            if not isinstance(result, response.Response):
+                result = response.Response(result)
 
             # Run the produced data through a faucet for the outgoing mimetype.
             output = self.faucets.process_outgoing(
                 mimetype,
-                faucets.Flow(faucets.Flow.OUT, result, endpoint=endpoint)
+                faucets.Flow(faucets.Flow.OUT, result.data, endpoint=endpoint)
             )
 
             # Synthesize the negotiated mimetype and charset
@@ -93,8 +103,8 @@ class Application:
             )
 
             # We made it! Spit out the actual response.
-            resp = response.Response(mimetype=mimetype)
-            resp.serve(start_response)
+            result.mimetype = mimetype
+            result.serve(start_response)
             encoded, length = charset.codec.encode(output)
             yield encoded
 

@@ -32,10 +32,18 @@ class Config:
         """Create a new Config instance."""
 
         for key in data:
-            setattr(self, key, data[key])
+            if isinstance(data[key], dict):
+                setattr(self, key, Config(data[key]))
+            else:
+                # Anything that isn't a dict we probably want as
+                # a final property.
+                setattr(self, key, data[key])
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
+
+    def __repr__(self):
+        return repr(self.__dict__)
 
 
 def load(path=None):
@@ -53,7 +61,7 @@ def load(path=None):
         data = {}
     else:
         yml = open(path, 'r')
-        data = yaml.load(yml)
+        data = yaml.safe_load(yml)
 
     # Make sure defaults are set valid and then turn them into
     # objects usable by our code.
@@ -87,15 +95,12 @@ def _objectify(data):
     conf = Config(data)
 
     # Convert the charsets into CharacterSet objects
-    conf.charsets = set()
-    for charset in data['charsets']:
-        conf.charsets.add(mime.CharacterSet.parse(charset))
+    conf.charsets = set(
+        mime.CharacterSet.parse(charset) for charset in conf.charsets
+    )
 
     # Make sure methods is a set rather than a list
-    conf.methods = set(data['methods'])
-
-    # Turn the defaults into their proper types
-    conf.default = Config(data['default'])
+    conf.methods = set(conf.methods)
 
     conf.default.charset = mime.CharacterSet.parse(conf.default.charset)
     conf.default.mimetype = mime.MimeType.parse(conf.default.mimetype)
