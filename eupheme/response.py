@@ -35,7 +35,7 @@ class HttpMovedPermanentlyException(HttpException):
     status = '301 Moved Permanently'
 
     def __init__(self, location):
-        super().__init__()
+        super().__init__({'Location': location})
         self.location = location
 
 
@@ -45,7 +45,7 @@ class HttpMovedException(HttpException):
     status = '302 Found'
 
     def __init__(self, location):
-        super().__init__()
+        super().__init__({'Location': location})
         self.location = location
 
 
